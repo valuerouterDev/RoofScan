@@ -25,6 +25,11 @@ Request:
 
 ## Setup
 
+Prerequisites for your Google Cloud key:
+- Geocoding API enabled
+- Solar API enabled
+- Static Maps API enabled
+
 1. Copy env file:
 
 ```bash

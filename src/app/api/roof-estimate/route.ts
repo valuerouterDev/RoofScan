@@ -126,6 +126,7 @@ export async function POST(req: Request) {
       formattedAddress: geocodeResult.formatted_address,
       latitude: lat,
       longitude: lng,
+      staticMapImageUrl: `/api/static-map?lat=${encodeURIComponent(String(lat))}&lng=${encodeURIComponent(String(lng))}`, 
       roofAreaMeters2: Number(roofAreaMeters2.toFixed(2)),
       roofAreaSqFt: Math.round(roofAreaSqFt),
       roofingSquares: Number(sqFtToRoofingSquares(roofAreaSqFt).toFixed(1)),

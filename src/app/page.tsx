@@ -14,6 +14,7 @@ type EstimateResponse = {
   formattedAddress: string;
   latitude: number;
   longitude: number;
+  staticMapImageUrl?: string;
   roofAreaMeters2: number;
   roofAreaSqFt: number;
   roofingSquares: number;
@@ -125,6 +126,17 @@ export default function HomePage() {
             <div className="kv"><b>Flat projected area</b>{result.flatAreaSqFt != null ? `${result.flatAreaSqFt.toLocaleString()} sq ft` : "Unavailable"}</div>
             <div className="kv"><b>Roof segments</b>{result.segments.length}</div>
           </div>
+
+          {result.staticMapImageUrl && (
+            <div style={{ marginTop: 16 }}>
+              <h3 style={{ marginBottom: 8 }}>Target House (Google Static Map)</h3>
+              <img
+                src={result.staticMapImageUrl}
+                alt="Target house satellite view"
+                style={{ width: "100%", maxWidth: 720, borderRadius: 10, border: "1px solid #e2e8f0" }}
+              />
+            </div>
+          )}
 
           {!!result.segments.length && (
             <div className="table-wrap">
