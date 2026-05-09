@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   mapUrl.searchParams.set("center", `${lat},${lng}`);
   mapUrl.searchParams.set("zoom", "21");
   mapUrl.searchParams.set("size", "640x640");
-  mapUrl.searchParams.set("scale", "2");
+  mapUrl.searchParams.set("scale", "1");
   mapUrl.searchParams.set("maptype", "satellite");
   mapUrl.searchParams.set("markers", `color:red|${lat},${lng}`);
   mapUrl.searchParams.set("key", apiKey);
