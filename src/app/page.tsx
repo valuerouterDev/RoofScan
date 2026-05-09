@@ -88,17 +88,24 @@ export default function HomePage() {
 
       if (data.roofAnalysisUrl) {
         setLoadingAnalysis(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 70000);
         try {
-          const analysisRes = await fetch(data.roofAnalysisUrl, { cache: "no-store" });
+          const analysisRes = await fetch(data.roofAnalysisUrl, { cache: "no-store", signal: controller.signal });
           const analysisData = await analysisRes.json();
           if (!analysisRes.ok) {
             setAnalysisError(analysisData.error || "Roof analysis failed.");
           } else {
             setAnalysis(analysisData);
           }
-        } catch {
-          setAnalysisError("Network error while analyzing roof image.");
+        } catch (err: any) {
+          if (err?.name === "AbortError") {
+            setAnalysisError("OpenAI analysis timed out. Please retry.");
+          } else {
+            setAnalysisError("Network error while analyzing roof image.");
+          }
         } finally {
+          clearTimeout(timeoutId);
           setLoadingAnalysis(false);
         }
       }
@@ -180,7 +187,6 @@ export default function HomePage() {
             <div className="kv" style={{ background: "#fff7d6", borderRadius: 8, padding: "8px 10px" }}><b>Approximate Pitch</b>{result.pitchX12 ?? "Unavailable"}</div>
             <div className="kv"><b>Solar API Imagery Date</b>{result.imageryDate ?? "Unavailable"}</div>
             <div className="kv"><b>Flat projected area</b>{result.flatAreaSqFt != null ? `${result.flatAreaSqFt.toLocaleString()} sq ft` : "Unavailable"}</div>
-            <div className="kv"><b>Roof segments</b>{result.segments.length}</div>
           </div>
 
           {result.staticMapImageUrl && (
@@ -198,32 +204,6 @@ export default function HomePage() {
             <p className="muted" style={{ marginTop: 10 }}>Google result is ready. Waiting for further AI analysis...</p>
           )}
 
-          {!!result.segments.length && (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Segment</th>
-                    <th>Area sq ft</th>
-                    <th>Pitch degrees</th>
-                    <th>Pitch x:12</th>
-                    <th>Azimuth</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.segments.map((s) => (
-                    <tr key={s.segmentIndex}>
-                      <td>{s.segmentIndex + 1}</td>
-                      <td>{s.areaSqFt ?? "-"}</td>
-                      <td>{s.pitchDegrees != null ? `${s.pitchDegrees}°` : "-"}</td>
-                      <td>{s.pitchX12 ?? "-"}</td>
-                      <td>{s.azimuthDegrees != null ? `${s.azimuthDegrees}°` : "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </section>
       )}
 

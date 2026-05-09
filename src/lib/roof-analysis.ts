@@ -75,6 +75,7 @@ export function buildOverlaySvg(analysis: RoofAnalysisResult, width = 640, heigh
 export async function analyzeRoofFromStaticMapDataUrl(imageDataUrl: string): Promise<RoofAnalysisResult> {
   const apiKey = getRequiredEnv("OPENAI_API_KEY");
   const model = process.env.OPENAI_ROOF_MODEL || "gpt-5";
+  const timeoutMs = Number(process.env.OPENAI_ANALYSIS_TIMEOUT_MS || 45000);
 
   const schemaHint = {
     summary: "string",
@@ -84,37 +85,51 @@ export async function analyzeRoofFromStaticMapDataUrl(imageDataUrl: string): Pro
     measurements: [{ item: "ridge", pixels: 0, feet: 0 }],
   };
 
-  const res = await fetch(OPENAI_RESPONSES_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      input: [
-        {
-          role: "system",
-          content: [
-            {
-              type: "input_text",
-              text:
-                "You are a roofing measurement analyst. Return only valid JSON with pixel-space coordinates referenced to the original 640x640 image. Keep scale unchanged.",
-            },
-          ],
-        },
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: USER_PROMPT },
-            { type: "input_image", image_url: imageDataUrl },
-            { type: "input_text", text: `Return JSON exactly with this shape: ${JSON.stringify(schemaHint)}` },
-          ],
-        },
-      ],
-    }),
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(OPENAI_RESPONSES_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        input: [
+          {
+            role: "system",
+            content: [
+              {
+                type: "input_text",
+                text:
+                  "You are a roofing measurement analyst. Return only valid JSON with pixel-space coordinates referenced to the original 640x640 image. Keep scale unchanged.",
+              },
+            ],
+          },
+          {
+            role: "user",
+            content: [
+              { type: "input_text", text: USER_PROMPT },
+              { type: "input_image", image_url: imageDataUrl },
+              { type: "input_text", text: `Return JSON exactly with this shape: ${JSON.stringify(schemaHint)}` },
+            ],
+          },
+        ],
+      }),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } catch (error: any) {
+    if (error?.name === "AbortError") {
+      throw new Error(`OpenAI analysis timed out after ${timeoutMs}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     throw new Error(`OpenAI analysis failed (${res.status}): ${await res.text()}`);
