@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { analyzeRoofFromStaticMapDataUrl, buildOverlaySvg } from "@/lib/roof-analysis";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 function toDataUrl(mimeType: string, bytes: ArrayBuffer): string {
   const base64 = Buffer.from(bytes).toString("base64");
   return `data:${mimeType};base64,${base64}`;

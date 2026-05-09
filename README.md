@@ -33,7 +33,7 @@ Prerequisites for your Google Cloud key:
 - Static Maps API enabled
 
 Additional AI analysis config:
-- `OPENAI_API_KEY`: API key for OpenAI Responses API
+- `OPENAI_API_KEY`: API key for OpenAI Responses API (**must also be set in Vercel Project Settings → Environment Variables**)
 - Optional: `OPENAI_ROOF_MODEL` (default `gpt-5`)
 
 1. Copy env file:
